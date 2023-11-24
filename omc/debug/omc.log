@@ -1,0 +1,44 @@
+﻿cl : 命令行  warning D9035: “Gm”选项已否决，并将在将来的版本中移除
+  snmp_nms.c
+E:\cp4_common_learning-master\ds\snmp\snmp_nms.c(756,30): warning C4267: “=”: 从“size_t”转换到“unsigned char”，可能丢失数据
+E:\cp4_common_learning-master\ds\snmp\snmp_nms.c(106): warning C4754: 在 E:\cp4_common_learning-master\ds\snmp\snmp_nms.c(103) 处的比较中的算术运算的转换规则意味着无法执行一个分支。将“(ulBlock * ...)”强制转换为“ULONG64”(或 8 字节的相似类型)。
+cl : 命令行  warning D9035: “Gm”选项已否决，并将在将来的版本中移除
+  TaskSys.cpp
+E:\cp4_common_learning-master\ds\ds_public\msg.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+E:\cp4_common_learning-master\ds\ds_public\msg.h(776,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  TaskDataSync.cpp
+E:\cp4_common_learning-master\ds\ds_public\msg.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+E:\cp4_common_learning-master\ds\ds_public\msg.h(776,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  TaskOmt.cpp
+E:\cp4_common_learning-master\ds\ds_public\msg.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+E:\cp4_common_learning-master\ds\ds_public\msg.h(776,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+E:\cp4_common_learning-master\ds\omc\omt\TaskOmt.cpp(965,15): warning C4457: “Json”的声明隐藏了函数参数
+E:\cp4_common_learning-master\ds\omc\omt\TaskOmt.cpp(929,72): message : 参见“Json”的声明
+E:\cp4_common_learning-master\ds\omc\omt\TaskOmt.cpp(1022,15): warning C4457: “Json”的声明隐藏了函数参数
+E:\cp4_common_learning-master\ds\omc\omt\TaskOmt.cpp(987,72): message : 参见“Json”的声明
+  main.cpp
+E:\cp4_common_learning-master\ds\ds_public\msg.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+E:\cp4_common_learning-master\ds\ds_public\msg.h(776,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  TaskDBSync.cpp
+E:\cp4_common_learning-master\ds\omc\db\TaskDBSync.cpp(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+E:\cp4_common_learning-master\ds\ds_public\msg.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+E:\cp4_common_learning-master\ds\ds_public\msg.h(776,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+E:\cp4_common_learning-master\ds\omc\db\TaskDBSync.cpp(1092,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+E:\cp4_common_learning-master\ds\omc\db\TaskDBSync.cpp(1097,9): error C2181: 没有匹配 if 的非法 else
+  OmcDao.cpp
+E:\cp4_common_learning-master\ds\ds_public\msg.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+E:\cp4_common_learning-master\ds\ds_public\msg.h(776,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  omc_public.cpp
+c1xx : fatal  error C1083: 无法打开源文件: “common\omc_public.cpp”: No such file or directory
+  TrapMsg.cpp
+E:\cp4_common_learning-master\ds\ds_public\msg.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+E:\cp4_common_learning-master\ds\ds_public\msg.h(776,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+E:\cp4_common_learning-master\ds\omc\agent\TrapMsg.cpp(796,17): warning C4456: “ulLen”的声明隐藏了上一个本地声明
+E:\cp4_common_learning-master\ds\omc\agent\TrapMsg.cpp(628,25): message : 参见“ulLen”的声明
+  TaskSnmp.cpp
+E:\cp4_common_learning-master\ds\ds_public\msg.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+E:\cp4_common_learning-master\ds\ds_public\msg.h(776,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  TaskQuery.cpp
+E:\cp4_common_learning-master\ds\ds_public\msg.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+E:\cp4_common_learning-master\ds\ds_public\msg.h(776,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  正在生成代码...

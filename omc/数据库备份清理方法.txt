@@ -1,0 +1,251 @@
+1、普通表、流水表的数据库存储时长可配置，数据库清理时间可配置，导出文件个数可配置
+2、clear 1分钟1次
+3、数据库备份按小时备份（或者5分钟）
+4、基础表合并成一个文件，为sql文件；
+5、流水表每个表单独备份，备份结果采用Json格式存储；每次备份时根据最后一次备份的时间，自动推算要备份表数据的时间范围，如最后一次某表的备份时间为T1（记录时间跨度为1小时），则本次备份时间为T2=T1+3600，数据库查询语句为Time>=T2,并根据返回的第一条记录的Time，推算出实际的记录时间范围（可能T2该小时时段内没有记录）
+
+今天测试结果分析：
+
+备份1小时数据（三个流水表）为Json格式的文件，大概为1秒，最大的文件大概44M。1小时不超过100M，一天估计大概1G（要实际测试一下);
+采用gos平台中的zip/unzip可以非常快速地压缩、解压缩，压缩率(目前大概为3倍）可以考虑如何优化；备份文件要压缩存储。
+客户端查询时，如果是历史数据，直接下载对应的压缩文件，客户端解压缩后解析Json文件；
+数据库表ne_basic_status差不多每增加一天的数据，数据库文件增加1个G，其中索引文件开销很大大。后续考虑流水表只存储最近1天或7天（根据配置来）
+
+
+ne_basci_status表性能：
+1、1小时数据量;(400网元）：28.8M文件，压缩后6.7M; 压缩率 4.3倍
+2、备份数据性能关注：读取数据库（1小时）并写文件： 460ms，文件压缩 63ms
+3、客户端文件传输（要测试一下，估计为1000ms之内，如果是千兆网，应该是100ms）， 文件解压缩 63ms  Json文件解析400ms
+
+数据库备份函数，通常结束时间为开始时间+3600
+
+BOOL OmcDao::BackupTxStatus(UINT32 ulStartTime, UINT32 ulEndTime, CHAR *szFile)
+{
+    INT32                   iRow = 0;
+    CHAR                    acSQL[1024];
+    PDBRET                  enRet = PDB_CONTINUE;
+    PDBRsltParam            Params;
+    OMA_TX_STATUS_REC_T     stInfo = {0};
+    CHAR                    acRec[1024];
+    UINT32                  ulLen;
+    BOOL                    bFirst = TRUE;
+    FILE                    *fp = fopen(szFile, "wb");
+
+    if (!fp)
+    {
+        return FALSE;
+    }
+
+    Params.Bind(&stInfo.ulTime);
+    Params.Bind(stInfo.acNeID, sizeof(stInfo.acNeID));
+    Params.Bind(&stInfo.stStatus.stLteStatus.ulStationID);
+    Params.Bind(&stInfo.stStatus.bOnline);
+    Params.Bind(&stInfo.stStatus.stResStatus.ulCpuUsage);
+    Params.Bind(&stInfo.stStatus.stResStatus.ulMemUsage);
+    Params.Bind(&stInfo.stStatus.stResStatus.ulDiskUsage);
+    Params.Bind(&stInfo.stStatus.stResStatus.ulDevTemp);
+    Params.Bind(&stInfo.stStatus.stLteStatus.ulPCI);
+    Params.Bind(&stInfo.stStatus.stLteStatus.iRSRP);
+    Params.Bind(&stInfo.stStatus.stLteStatus.iRSRQ);
+    Params.Bind(&stInfo.stStatus.stLteStatus.iRSSI);
+    Params.Bind(&stInfo.stStatus.stLteStatus.iSINR);
+    Params.Bind(&stInfo.stStatus.ulRunStatus);
+
+    sprintf(acSQL, "SELECT time, ne_id, station_id, online, cpu_usage, mem_usage, disk_usage, dev_temp, pci, rsrp, rsrq, rssi, sinr, status FROM ne_basic_status WHERE time>=%u AND time<%u", ulStartTime, ulEndTime);
+    iRow = m_pPDBApp->Query(acSQL, Params);
+
+    if (INVALID_ROWCOUNT == iRow)
+    {
+        DaoLog(LOG_ERROR, "query ne_basic_status failed");
+        fclose(fp);
+        return FALSE;
+    }
+
+    FOR_ROW_FETCH(enRet, m_pPDBApp)
+    {
+        ulLen = sprintf(acRec, "%c{\"time\":%u, \"ne_id\":\"%s\", \"station_id\":%u, \"online\":%u, \"cpu_usage\":%u, \"mem_usage\":%u, \"disk_usage\":%u,"
+                "\"dev_temp\":%d, \"pci\":%u, \"rsrp\":%d, \"rsrq\":%d, \"rssi\":%d, \"sinr\":%d, \"status\":%u}",
+                bFirst?'[':',',
+                stInfo.ulTime,
+                stInfo.acNeID,
+                stInfo.stStatus.stLteStatus.ulStationID,
+                stInfo.stStatus.bOnline,
+                stInfo.stStatus.stResStatus.ulCpuUsage,
+                stInfo.stStatus.stResStatus.ulMemUsage,
+                stInfo.stStatus.stResStatus.ulDiskUsage,
+                stInfo.stStatus.stResStatus.ulDevTemp,
+                stInfo.stStatus.stLteStatus.ulPCI,
+                stInfo.stStatus.stLteStatus.iRSRP,
+                stInfo.stStatus.stLteStatus.iRSRQ,
+                stInfo.stStatus.stLteStatus.iRSSI,
+                stInfo.stStatus.stLteStatus.iSINR,
+                stInfo.stStatus.ulRunStatus);
+
+        if (bFirst)
+        {
+            bFirst = FALSE;
+        }
+
+        if (ulLen != fwrite(acRec, 1, ulLen, fp))
+        {
+            enRet = PDB_ERROR;
+            break;
+        }
+
+        memset(&stInfo, 0, sizeof(stInfo));
+    }
+
+    m_pPDBApp->CloseQuery();
+
+    fwrite("]", 1, 1, fp);
+    fclose(fp);
+
+    return enRet != PDB_ERROR;
+}
+
+
+
+BOOL ZipFile(CHAR *szFile, CHAR *szZipFile)
+{
+    UINT32      ulTotalLen = 0;
+    INT32       iFileSize;
+    FILE        *fp = NULL;
+    CHAR        *szBuf = NULL;
+    CHAR        *szOut = NULL;
+    UINT16      usFileNameLen;
+    UINT32      ulOffset = 0;
+    BOOL        bRet = FALSE;
+    HANDLE      hZip = NULL;
+    UINT32      ulOutLen = 0;
+    //std::string   strFile;
+
+    if (!szFile)
+    {
+        return FALSE;
+    }
+
+    iFileSize = gos_get_file_size(szFile);
+    if (iFileSize <= 0)
+    {
+        return FALSE;
+    }
+
+    fp = fopen(szFile, "rb");
+    if (!fp)
+    {
+        return FALSE;
+    }
+
+    szBuf = (CHAR*)calloc(1, iFileSize*2+4096);
+    if (!szBuf)
+    {
+        goto end;
+    }
+
+    szOut = szBuf+iFileSize;
+
+    // 文件
+    if (iFileSize != fread(szBuf, 1, iFileSize, fp))
+    {
+        goto end;
+    }
+
+    hZip = gos_comp_init();
+    gos_comp(hZip, szBuf, iFileSize, szOut, &ulOutLen);
+    if (ulOutLen == 0)
+    {
+        goto end;
+    }
+
+    fclose(fp);
+    fp = fopen(szZipFile, "wb");
+    if (!fp)
+    {
+        goto end;
+    }
+
+    if (ulOutLen != fwrite(szOut, 1, ulOutLen, fp))
+    {
+        goto end;
+    }
+
+    bRet = TRUE;
+
+end:
+    if (fp)
+    {
+        fclose(fp);
+    }
+
+    gos_comp_free(hZip);
+    GOS_FREE(szBuf);
+
+    return bRet;
+}
+
+CHAR* UnzipFile(CHAR *szZipFile)
+{
+    FILE    *fp = NULL;
+    INT32   iFileSize = gos_get_file_size(szZipFile);
+    CHAR    *szBuf = NULL;
+    CHAR    *szOutBuf = NULL;
+    UINT32  ulOutLen;
+    UINT32  ulUnzipOutLen;
+    BOOL    bRet = FALSE;
+    CHAR    acDir[512];
+    HANDLE  hZip = NULL;
+
+    if (iFileSize <= 0)
+    {
+        return NULL;
+    }
+
+    szBuf = (CHAR*)calloc(1, iFileSize);
+    fp = fopen(szZipFile, "rb");
+    if (!fp)
+    {
+        goto end;
+    }
+
+    if (iFileSize != fread(szBuf, 1, iFileSize, fp))
+    {
+        goto end;
+    }
+
+    hZip = gos_comp_init();
+    ulOutLen = gos_get_decomp_size(szBuf);
+
+    szOutBuf = (CHAR*)calloc(1, ulOutLen+1);
+    if (!szOutBuf)
+    {
+        goto end;
+    }
+
+    gos_decomp(hZip, szBuf, szOutBuf, &ulUnzipOutLen);
+
+    if (ulUnzipOutLen != ulOutLen)
+    {
+        goto end;
+    }
+
+    fclose(fp);
+
+    bRet = TRUE;
+
+end:
+    if (fp)
+    {
+        fclose(fp);
+    }
+
+    GOS_FREE(szBuf);
+    if (!bRet)
+    {
+        GOS_FREE(szOutBuf);
+    }
+
+    gos_comp_free(hZip);
+
+    return szOutBuf;
+}
+
